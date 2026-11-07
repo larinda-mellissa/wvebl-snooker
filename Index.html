@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Snooker Match Centre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: club-room scorer — scoring desk (players, ball rack, actions) beside a ledger of breaks and log; TV board on baize */
+:root{
+  --bg:#edf1ec; --surface:#fbfcfa; --surface-2:#e3e9e3; --line:#d2dbd3;
+  --ink:#16201a; --muted:#57665c; --accent:#8a4426; --accent-ink:#fff8f2;
+  --felt:#1d5a38; --felt-2:#164a2d; --felt-ink:#f1f6f2; --felt-muted:#a8c6b2;
+  --warn:#9a5a00; --warn-bg:#fbefd9;
+  --ring:rgba(0,0,0,.28); --felt-ring:rgba(255,255,255,.45);
+  --b1:#c4202a; --b2:#f0c419; --b3:#1e8a3b; --b4:#7a4a24; --b5:#1f5fbf; --b6:#ec8aa8; --b7:#161616;
+  --f-display:"Saira Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0d1310; --surface:#151d18; --surface-2:#1c2620; --line:#29362e;
+  --ink:#e4ebe6; --muted:#93a399; --accent:#d48b62; --accent-ink:#1a0e08;
+  --felt:#18502f; --felt-2:#113d24; --felt-ink:#eef5f0; --felt-muted:#9dbda8;
+  --warn:#f0b35a; --warn-bg:#2d2412; --ring:rgba(255,255,255,.4); --felt-ring:rgba(255,255,255,.5);
+  color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0d1310; --surface:#151d18; --surface-2:#1c2620; --line:#29362e;
+  --ink:#e4ebe6; --muted:#93a399; --accent:#d48b62; --accent-ink:#1a0e08;
+  --felt:#18502f; --felt-2:#113d24; --felt-ink:#eef5f0; --felt-muted:#9dbda8;
+  --warn:#f0b35a; --warn-bg:#2d2412; --ring:rgba(255,255,255,.4); --felt-ring:rgba(255,255,255,.5);
+  color-scheme:dark }
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 32px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1120px;margin:0 auto}
+.num{font-variant-numeric:tabular-nums}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-block:16px 12px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand h1{font-family:var(--f-display);font-weight:700;font-size:1.7rem;letter-spacing:.01em;margin:0;line-height:1}
+.chip{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+.chip.ex{background:var(--warn-bg);color:var(--warn)}
+.tabs{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:10px}
+.tabs a{padding:7px 14px;border-radius:7px;text-decoration:none;color:var(--muted);font-weight:600}
+.tabs a[aria-current="page"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px var(--ring)}
+
+/* scorer */
+.matchbar{display:flex;gap:8px 18px;flex-wrap:wrap;align-items:baseline;color:var(--muted);margin-bottom:12px}
+.matchbar strong{color:var(--ink);font-family:var(--f-display);font-size:1.25rem;font-weight:600}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.main{display:flex;flex-direction:column;gap:14px;min-width:0}
+.players{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;position:relative;min-width:0}
+.pcard.on{border-color:var(--felt);box-shadow:inset 0 0 0 1px var(--felt)}
+.pcard .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pname{font-weight:700;font-size:1.05rem;overflow-wrap:anywhere}
+.pill{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--felt);color:var(--felt-ink);white-space:nowrap}
+.pscore{font-family:var(--f-display);font-weight:700;font-size:clamp(3rem,9vw,4.6rem);line-height:.95;font-variant-numeric:tabular-nums}
+.pmeta{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:.88rem}
+.pmeta b{color:var(--ink)}
+.brkline{min-height:1.5em;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-weight:600}
+.linkbtn{background:none;border:0;padding:0;color:var(--muted);text-decoration:underline;font-size:.82rem;align-self:flex-start}
+.linkbtn.armed{color:var(--accent);font-weight:700}
+
+.info{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,2fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+@media (max-width:640px){.info{grid-template-columns:repeat(3,minmax(0,1fr))}.info .msg{grid-column:1/-1}}
+.info>div{background:var(--surface);padding:10px 14px;min-width:0}
+.lbl{font-size:.7rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.val{font-family:var(--f-display);font-size:1.6rem;font-weight:600;line-height:1.1;display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+.msg .val{font-family:var(--f-body);font-size:1rem;font-weight:600;line-height:1.3}
+.msg.alert{background:var(--warn-bg)}.msg.alert .val{color:var(--warn)}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.panel h3{margin:0 0 10px;font-family:var(--f-display);font-weight:600;font-size:1.15rem;letter-spacing:.02em}
+.rack{background:var(--felt);border-radius:12px;padding:18px 14px 14px;border:6px solid var(--accent)}
+.balls{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;justify-items:center}
+.ballbtn{border:0;background:none;padding:0;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--felt-ink)}
+.ball{width:clamp(38px,10vw,66px);aspect-ratio:1;max-width:100%;border-radius:50%;background:radial-gradient(circle at 34% 30%,rgba(255,255,255,.75) 0 7%,rgba(255,255,255,.18) 22%,transparent 45%),var(--c);box-shadow:0 0 0 1px var(--felt-ring),0 4px 8px rgba(0,0,0,.35);transition:transform .08s}
+.ballbtn:active .ball{transform:scale(.92)}
+.ballbtn small{font-weight:700;font-size:.8rem;color:var(--felt-muted)}
+.ballbtn:disabled{cursor:not-allowed}
+.ballbtn:disabled .ball{opacity:.22;filter:grayscale(.6);box-shadow:none}
+.ballbtn:disabled small{opacity:.4}
+.rack-note{margin:12px 0 0;color:var(--felt-muted);font-size:.86rem;text-align:center;min-height:1.3em}
+
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.btn{border:1px solid var(--line);background:var(--surface-2);padding:10px 16px;border-radius:9px;font-weight:700;min-height:44px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.felt{background:var(--felt);border-color:var(--felt);color:var(--felt-ink)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.sel{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.spacer{flex:1}
+
+.foulsheet{margin-top:14px;border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:12px}
+.foulsheet .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.stepper button{border:0;background:var(--surface-2);width:40px;height:40px;font-weight:700;font-size:1.1rem}
+.stepper span{min-width:40px;text-align:center;font-weight:700}
+
+.frameover{background:var(--felt);color:var(--felt-ink);border-radius:12px;padding:18px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.frameover h2{margin:0;font-family:var(--f-display);font-size:1.6rem;font-weight:700;text-wrap:balance}
+.frameover p{margin:2px 0 0;color:var(--felt-muted)}
+.frameover .btn{background:var(--felt-ink);color:var(--felt-2);border-color:transparent}
+
+.side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.brklist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.brklist li{display:grid;grid-template-columns:2.6em 1fr;gap:4px 10px;align-items:center}
+.brklist .pts{font-family:var(--f-display);font-weight:700;font-size:1.35rem;text-align:right}
+.brklist .who{font-size:.88rem;color:var(--muted)}
+.dots{display:flex;flex-wrap:wrap;gap:3px;grid-column:2}
+.dot{width:11px;height:11px;border-radius:50%;background:var(--c);box-shadow:0 0 0 1px var(--ring)}
+.dot.fb{box-shadow:0 0 0 2px var(--accent)}
+.frames{list-style:none;margin:0 0 4px;padding:0;display:flex;flex-direction:column;gap:4px;font-size:.92rem}
+.frames li{display:flex;justify-content:space-between;gap:8px}
+.log{list-style:none;margin:0;padding:0;max-height:360px;overflow:auto;font-size:.88rem;display:flex;flex-direction:column}
+.log li{display:grid;grid-template-columns:3.4em 1fr;gap:8px;padding:5px 0;border-top:1px solid var(--line)}
+.log li:first-child{border-top:0}
+.log time{color:var(--muted)}
+.log .k-frame,.log .k-foul,.log .k-break{font-weight:700}
+.log .k-foul{color:var(--accent)}
+.empty{color:var(--muted);font-size:.9rem;margin:0}
+
+/* TV board */
+.tv{background:var(--felt-2);color:var(--felt-ink);border-radius:16px;padding:clamp(16px,3vw,32px);display:flex;flex-direction:column;gap:clamp(12px,2vw,22px);border:8px solid var(--accent)}
+.tv-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;color:var(--felt-muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase;font-size:clamp(.8rem,1.5vw,1rem)}
+.tv-clock{font-family:var(--f-display);font-size:clamp(1.3rem,3vw,2rem);color:var(--felt-ink)}
+.tv-row{display:grid;grid-template-columns:18px minmax(0,1fr) auto auto;gap:clamp(10px,2vw,22px);align-items:center;background:var(--felt);border-radius:12px;padding:clamp(10px,1.8vw,18px) clamp(12px,2vw,22px)}
+.tv-mark{width:14px;height:14px;border-radius:50%;background:transparent}
+.tv-row.on .tv-mark{background:var(--b2);box-shadow:0 0 0 3px rgba(240,196,25,.25)}
+.tv-name{font-family:var(--f-display);font-weight:600;font-size:clamp(1.5rem,4.4vw,3.2rem);line-height:1.05;overflow-wrap:anywhere}
+.tv-frames{font-family:var(--f-display);font-weight:700;font-size:clamp(1.6rem,4vw,2.8rem);background:var(--felt-2);border-radius:8px;padding:0 .45em;min-width:1.6em;text-align:center}
+.tv-score{font-family:var(--f-display);font-weight:700;font-size:clamp(2.6rem,8vw,6rem);line-height:1;min-width:2.2ch;text-align:right;font-variant-numeric:tabular-nums}
+.tv-break{display:flex;align-items:center;gap:14px;flex-wrap:wrap;min-height:clamp(36px,5vw,56px)}
+.tv-break .t{font-family:var(--f-display);font-size:clamp(1.3rem,3.2vw,2.3rem);font-weight:600}
+.tv-break .dot{width:clamp(14px,2.2vw,24px);height:clamp(14px,2.2vw,24px);box-shadow:0 0 0 1px var(--felt-ring)}
+.tv-foot{display:grid;grid-template-columns:repeat(3,auto) minmax(0,1fr);gap:clamp(12px,3vw,40px);align-items:end;border-top:1px solid rgba(255,255,255,.15);padding-top:clamp(10px,1.8vw,18px)}
+@media (max-width:640px){.tv-foot{grid-template-columns:repeat(3,auto)}.tv-foot .msg{grid-column:1/-1}}
+.tv-foot .lbl{color:var(--felt-muted)}
+.tv-foot .val{font-size:clamp(1.4rem,3vw,2.2rem);color:var(--felt-ink)}
+.tv-foot .msg .val{font-family:var(--f-body);font-size:clamp(1rem,2vw,1.35rem);color:var(--b2)}
+.tv-note{color:var(--muted);font-size:.9rem;margin:12px 0 0}
+
+/* setup */
+.setup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;max-width:760px}
+@media (max-width:640px){.setup{grid-template-columns:minmax(0,1fr)}}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-weight:700;font-size:.9rem}
+.field input,.field select{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);min-height:44px;width:100%}
+.field .hint{color:var(--muted);font-size:.82rem}
+.span2{grid-column:1/-1}
+.setup-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.lede{color:var(--muted);max-width:62ch;margin:0 0 16px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1>Snooker Match Centre</h1><span class="chip">Prototype</span><span class="chip ex" id="exchip" hidden>Example match</span></div>
+    <nav class="tabs" aria-label="Views">
+      <a href="#scorer" data-v="scorer">Scorer</a>
+      <a href="#board" data-v="board">TV board</a>
+      <a href="#setup" data-v="setup">Match setup</a>
+    </nav>
+  </header>
+
+  <section id="v-scorer">
+    <div class="matchbar" id="matchbar"></div>
+    <div class="grid">
+      <div class="main">
+        <div class="players" id="players"></div>
+        <div class="info" id="info"></div>
+        <div id="frameover" hidden></div>
+        <div class="panel" id="desk">
+          <div class="rack">
+            <div class="balls" id="balls"></div>
+            <p class="rack-note" id="racknote"></p>
+          </div>
+          <div class="actions" id="actions"></div>
+          <div class="foulsheet" id="foulsheet" hidden></div>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="panel"><h3>Frames</h3><ul class="frames" id="frames"></ul></div>
+        <div class="panel"><h3>Top breaks</h3><ul class="brklist" id="breaks"></ul></div>
+        <div class="panel"><h3>Activity log</h3><ol class="log" id="log"></ol></div>
+      </aside>
+    </div>
+  </section>
+
+  <section id="v-board" hidden>
+    <div class="tv" id="tv"></div>
+    <p class="tv-note">This is what a venue TV would show. In the live version each table gets its own address and updates as the scorer taps.</p>
+  </section>
+
+  <section id="v-setup" hidden>
+    <p class="lede">Start a new match here. It replaces the match currently on the scorer.</p>
+    <form class="setup" id="setupform">
+      <div class="field"><label for="p1">Player 1</label><input id="p1" required maxlength="40"></div>
+      <div class="field"><label for="p2">Player 2</label><input id="p2" required maxlength="40"></div>
+      <div class="field"><label for="h1">Player 1 start (handicap)</label><input id="h1" type="number" min="0" max="140" value="0"><span class="hint">Points added at the start of every frame</span></div>
+      <div class="field"><label for="h2">Player 2 start (handicap)</label><input id="h2" type="number" min="0" max="140" value="0"></div>
+      <div class="field"><label for="bo">Match length</label><select id="bo"><option value="1">Best of 1</option><option value="3">Best of 3</option><option value="5" selected>Best of 5</option><option value="7">Best of 7</option><option value="9">Best of 9</option><option value="11">Best of 11</option></select></div>
+      <div class="field"><label for="first">Breaks off in frame 1</label><select id="first"><option value="0">Player 1</option><option value="1">Player 2</option></select></div>
+      <div class="field"><label for="venue">Venue</label><input id="venue" maxlength="40" placeholder="e.g. St. James Legion"></div>
+      <div class="field"><label for="tbl">Table</label><input id="tbl" maxlength="20" value="Table 1"></div>
+      <div class="setup-actions span2">
+        <button class="btn primary" type="submit">Start match</button>
+        <button class="btn" type="button" id="loadex">Load example match</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<script>
+const BALL = {1:'Red',2:'Yellow',3:'Green',4:'Brown',5:'Blue',6:'Pink',7:'Black'};
+const KEY = 'snooker-match-centre-v1';
+let S = null, U = [], foulUI = null, armed = null, armTimer = null;
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nm = i => S.cfg.p[i].n;
+const need = () => Math.floor(S.cfg.bestOf/2) + 1;
+
+/* ---------- engine ---------- */
+function newMatch(cfg, example){
+  S = {cfg, example: !!example, framesWon:[0,0], frames:[], breaks:[], hb:[0,0], log:[], matchOver:false, f:null};
+  U = []; startFrame();
+}
+function startFrame(){
+  const n = S.frames.length, t = (S.cfg.first + n) % 2;
+  S.f = {no:n+1, sc:[+S.cfg.p[0].h||0, +S.cfg.p[1].h||0], reds:15, ph:'red', next:2, turn:t, brk:0, bb:[], fbOffer:false, offender:null, over:false, winner:null, start:Date.now()};
+  log(`Frame ${n+1} — ${nm(t)} breaks off`, 'frame');
+}
+function log(text, k){ S.log.unshift({t:Date.now(), fr:S.f ? S.f.no : 0, text, k}); if (S.log.length > 400) S.log.pop(); }
+function ballOnVal(f){ return f.ph==='red' ? 1 : f.ph==='clear' ? f.next : 7; }
+function remaining(f){
+  if (f.ph==='red') return f.reds*8 + 27;
+  if (f.ph==='colour') return 7 + f.reds*8 + 27;
+  if (f.ph==='black') return 7;
+  let s = 0; for (let v=f.next; v<=7; v++) s += v; return s;
+}
+function lastBall(f){ return f.bb[f.bb.length-1]; }
+function canPot(v){
+  const f = S.f; if (!f || f.over) return false;
+  if (f.ph==='red') return v===1;
+  if (f.ph==='colour'){ if (v>=2) return true; const l = lastBall(f); return v===1 && f.reds>0 && l && l.v===1 && !l.fb; }
+  if (f.ph==='clear') return v===f.next;
+  if (f.ph==='black') return v===7;
+}
+function normalize(f){ if (f.ph==='colour') f.ph='red'; if (f.ph==='red' && f.reds===0){ f.ph='clear'; f.next=2; } }
+function addPts(v, fb){
+  const f = S.f; f.sc[f.turn]+=v; f.brk+=v; f.bb.push({v, fb:!!fb}); f.fbOffer=false;
+}
+function pot(v){
+  const f = S.f; const ph = f.ph;
+  addPts(v);
+  log(`${nm(f.turn)} pots ${BALL[v].toLowerCase()} · break ${f.brk}`, 'pot');
+  if (v===1){ f.reds--; f.ph='colour'; return; }
+  if (ph==='colour'){ f.ph = f.reds>0 ? 'red' : 'clear'; f.next=2; return; }
+  if (ph==='clear'){
+    if (v<7){ f.next++; return; }
+    if (f.sc[0]===f.sc[1]){ closeBreak(); f.ph='black'; log('Scores level — black re-spotted. Toss to decide who plays.', 'frame'); return; }
+    finishFrame(f.sc[0]>f.sc[1] ? 0 : 1, 'on the final black'); return;
+  }
+  if (ph==='black') finishFrame(f.turn, 'on the re-spotted black');
+}
+function freeBall(){
+  const f = S.f, v = ballOnVal(f);
+  addPts(v, true);
+  log(`${nm(f.turn)} pots a free ball (+${v}) · break ${f.brk}`, 'pot');
+  if (f.ph==='red') f.ph='colour';
+}
+function closeBreak(){
+  const f = S.f;
+  if (f.brk>0){
+    S.breaks.push({p:f.turn, pts:f.brk, balls:f.bb.slice(), fr:f.no});
+    if (f.brk > S.hb[f.turn]) S.hb[f.turn] = f.brk;
+    log(`${nm(f.turn)} — break of ${f.brk}`, 'break');
+  }
+  f.brk=0; f.bb=[];
+}
+function endVisit(){
+  const f = S.f; closeBreak(); f.turn = 1-f.turn; f.fbOffer=false; normalize(f);
+  log(`${nm(f.turn)} to the table`, 'turn');
+}
+function foul(pen, redsLost){
+  const f = S.f, off = f.turn, opp = 1-off;
+  closeBreak();
+  f.sc[opp] += pen;
+  f.reds = Math.max(0, f.reds - redsLost);
+  log(`Foul by ${nm(off)} — ${pen} to ${nm(opp)}${redsLost ? ` (${redsLost} red${redsLost>1?'s':''} off the table)` : ''}`, 'foul');
+  if (f.ph==='black'){ finishFrame(opp, 'after a foul on the re-spotted black'); return; }
+  normalize(f);
+  f.turn = opp; f.fbOffer = true; f.offender = off;
+}
+function playAgain(){
+  const f = S.f; f.turn = f.offender; f.fbOffer=false;
+  log(`${nm(1-f.turn)} puts ${nm(f.turn)} back in`, 'turn');
+}
+function concede(i){ finishFrame(1-i, `${nm(i)} conceded`); }
+function finishFrame(w, how){
+  const f = S.f; closeBreak(); f.over=true; f.winner=w;
+  S.framesWon[w]++;
+  S.frames.push({no:f.no, sc:f.sc.slice(), w});
+  log(`Frame ${f.no} to ${nm(w)}, ${f.sc[w]}–${f.sc[1-w]} (${how})`, 'frame');
+  if (S.framesWon[w] >= need()){ S.matchOver=true; log(`${nm(w)} wins the match ${S.framesWon[w]}–${S.framesWon[1-w]}`, 'frame'); }
+}
+
+/* ---------- persistence + actions ---------- */
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function act(fn){ U.push(JSON.stringify(S)); if (U.length>300) U.shift(); fn(); foulUI=null; save(); render(); }
+function undo(){ if (!U.length) return; S = JSON.parse(U.pop()); foulUI=null; save(); render(); }
+
+/* ---------- example match ---------- */
+function seed(){
+  newMatch({p:[{n:'Gord Halvorsen',h:0},{n:'Danny Pereira',h:0}], bestOf:5, venue:'Example venue', table:'Table 1', first:0}, true);
+  const P = (...vs) => vs.forEach(v => { if (canPot(v)) pot(v); });
+  S.f.start = Date.now() - 34*60000;
+  endVisit(); P(1,7,1,5); endVisit(); P(1,6,1,7,1,7); endVisit(); foul(4,0);
+  P(1,2,1,7); endVisit(); P(1,7,1,7,1,4); endVisit(); P(1,5,1,7,1,7,1,6); endVisit();
+  P(1,7); endVisit(); P(2,3,4,5); endVisit(); concede(1);
+  startFrame(); S.f.start = Date.now() - 9*60000;
+  endVisit(); P(1,7,1,7,1,6,1,7); endVisit(); P(1,4); endVisit(); foul(5,0);
+  freeBall(); P(7,1,7);
+  U = [];
+}
+
+/* ---------- render ---------- */
+const ballDot = (b, cls='dot') => `<span class="${cls}${b.fb?' fb':''}" style="--c:var(--b${b.v})" title="${b.fb?'Free ball':BALL[b.v]}"></span>`;
+
+function render(){
+  const f = S.f;
+  document.getElementById('exchip').hidden = !S.example;
+
+  // match bar
+  const venue = [S.cfg.venue, S.cfg.table].filter(Boolean).map(esc).join(' · ');
+  document.getElementById('matchbar').innerHTML =
+    `<strong>${S.matchOver ? 'Match complete' : `Frame ${f.no}`}</strong><span>Best of ${S.cfg.bestOf} · first to ${need()}</span>${venue?`<span>${venue}</span>`:''}`;
+
+  // players
+  document.getElementById('players').innerHTML = [0,1].map(i => {
+    const on = !f.over && f.turn===i;
+    const brk = on && f.brk>0 ? `Break ${f.brk} ${f.bb.map(b=>ballDot(b)).join('')}` : '';
+    const hc = +S.cfg.p[i].h ? `<span>Start <b>${S.cfg.p[i].h}</b></span>` : '';
+    return `<div class="pcard${on?' on':''}">
+      <div class="row"><span class="pname">${esc(nm(i))}</span>${on?'<span class="pill">At the table</span>':''}</div>
+      <div class="pscore">${f.sc[i]}</div>
+      <div class="brkline num">${brk}</div>
+      <div class="pmeta"><span>Frames <b class="num">${S.framesWon[i]}</b></span><span>High break <b class="num">${S.hb[i]}</b></span>${hc}</div>
+      ${!f.over ? `<button class="linkbtn${armed==='c'+i?' armed':''}" data-concede="${i}">${armed==='c'+i ? 'Tap again to concede' : 'Concede frame'}</button>` : ''}
+    </div>`;
+  }).join('');
+
+  // info strip
+  const rem = remaining(f), lead = Math.abs(f.sc[0]-f.sc[1]), trail = f.sc[0]<f.sc[1] ? 0 : 1;
+  let msg = '', alert = false;
+  if (f.over) msg = `Frame ${f.no} complete`;
+  else if (f.fbOffer) { msg = `Foul by ${esc(nm(f.offender))}. ${esc(nm(f.turn))} plays, takes a free ball if called, or puts ${esc(nm(f.offender))} back in.`; alert = true; }
+  else if (f.ph==='black') { msg = 'Re-spotted black — next score wins the frame'; alert = true; }
+  else if (lead > rem) { const n = Math.ceil((lead-rem)/Math.max(4, ballOnVal(f))); msg = `${esc(nm(trail))} needs ${n} snooker${n>1?'s':''}`; alert = true; }
+  else if (lead === rem && lead>0) { msg = `${esc(nm(trail))} needs every ball to force a re-spotted black`; alert = true; }
+  else if (f.sc[0]===f.sc[1]) msg = 'Scores level';
+  else msg = `${esc(nm(1-trail))} leads by ${lead}`;
+  const onLbl = f.ph==='red' ? ballDot({v:1}) + 'Red' : f.ph==='colour' ? 'Colour' : ballDot({v:ballOnVal(f)}) + BALL[ballOnVal(f)];
+  document.getElementById('info').innerHTML =
+    `<div><div class="lbl">Reds left</div><div class="val">${f.reds}</div></div>
+     <div><div class="lbl">Ball on</div><div class="val">${f.over?'—':onLbl}</div></div>
+     <div><div class="lbl">Remaining</div><div class="val">${f.over?0:rem}</div></div>
+     <div class="msg${alert?' alert':''}"><div class="lbl">Situation</div><div class="val">${msg}</div></div>`;
+
+  // frame over
+  const fo = document.getElementById('frameover');
+  fo.hidden = !f.over;
+  if (f.over){
+    const w = f.winner;
+    fo.innerHTML = S.matchOver
+      ? `<div><h2>${esc(nm(w))} wins ${S.framesWon[w]}–${S.framesWon[1-w]}</h2><p>Final frame ${f.sc[w]}–${f.sc[1-w]}. Highest break ${Math.max(...S.hb)}.</p></div><a class="btn" href="#setup" style="text-decoration:none">Set up next match</a>`
+      : `<div><h2>Frame ${f.no} to ${esc(nm(w))}, ${f.sc[w]}–${f.sc[1-w]}</h2><p>Match score ${esc(nm(0))} ${S.framesWon[0]} – ${S.framesWon[1]} ${esc(nm(1))}</p></div><button class="btn" id="nextframe">Start frame ${f.no+1}</button>`;
+  }
+  document.getElementById('desk').hidden = f.over;
+
+  // balls
+  document.getElementById('balls').innerHTML = [1,2,3,4,5,6,7].map(v =>
+    `<button class="ballbtn" data-pot="${v}" ${canPot(v)?'':'disabled'} aria-label="Pot ${BALL[v]} (${v})"><span class="ball" style="--c:var(--b${v})"></span><small>${v}</small></button>`).join('');
+  const l = lastBall(f);
+  document.getElementById('racknote').textContent =
+    f.ph==='colour' && l && l.v===1 && !l.fb && f.reds>0 ? 'Tap a colour. Tap red again only if two reds went in on the same shot.'
+    : f.ph==='clear' ? `Colours in order — ${BALL[f.next].toLowerCase()} is on.` : '';
+
+  // actions
+  let a = `<button class="btn felt" data-a="end">End visit</button>
+           <button class="btn${foulUI?' sel':''}" data-a="foul">Foul…</button>`;
+  if (f.fbOffer){
+    a += `<button class="btn" data-a="fb" ${f.ph==='black'?'disabled':''}>Free ball (+${ballOnVal(f)})</button>
+          <button class="btn" data-a="again">Put ${esc(nm(f.offender))} back in</button>`;
+  }
+  a += `<span class="spacer"></span><button class="btn" data-a="undo" ${U.length?'':'disabled'}>Undo</button>`;
+  document.getElementById('actions').innerHTML = a;
+
+  // foul sheet
+  const fs = document.getElementById('foulsheet');
+  fs.hidden = !foulUI;
+  if (foulUI){
+    fs.innerHTML = `<div class="lbl">Foul by ${esc(nm(f.turn))} — points to ${esc(nm(1-f.turn))}</div>
+      <div class="row">${[4,5,6,7].map(p=>`<button class="btn${foulUI.pen===p?' sel':''}" data-pen="${p}">${p}</button>`).join('')}</div>
+      <div class="row"><span>Reds knocked off the table</span><span class="stepper"><button data-rl="-1" aria-label="Fewer reds">−</button><span class="num">${foulUI.reds}</span><button data-rl="1" aria-label="More reds">+</button></span></div>
+      <div class="row"><button class="btn primary" data-a="foulok">Award ${foulUI.pen} to ${esc(nm(1-f.turn))}</button><button class="btn" data-a="foulx">Cancel</button></div>`;
+  }
+
+  // frames
+  document.getElementById('frames').innerHTML = S.frames.length
+    ? S.frames.map(fr => `<li><span>Frame ${fr.no} · ${esc(nm(fr.w))}</span><span class="num">${fr.sc[0]}–${fr.sc[1]}</span></li>`).join('')
+    : '<li class="empty">No frames finished yet</li>';
+
+  // breaks
+  const top = S.breaks.slice().sort((x,y)=>y.pts-x.pts).slice(0,6);
+  document.getElementById('breaks').innerHTML = top.length
+    ? top.map(b => `<li><span class="pts num">${b.pts}</span><span class="who">${esc(nm(b.p))} · frame ${b.fr}</span><span class="dots">${b.balls.map(x=>ballDot(x)).join('')}</span></li>`).join('')
+    : '<li class="empty">No breaks yet</li>';
+
+  // log
+  document.getElementById('log').innerHTML = S.log.slice(0,60).map(e => {
+    const d = new Date(e.t), tm = d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+    return `<li><time class="num">${tm}</time><span class="k-${e.k}">${esc(e.text)}</span></li>`;
+  }).join('');
+
+  renderTV();
+}
+
+function clockText(){
+  const s = Math.max(0, Math.floor((Date.now() - S.f.start)/1000));
+  return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+}
+function renderTV(){
+  const f = S.f, rem = remaining(f), lead = Math.abs(f.sc[0]-f.sc[1]), trail = f.sc[0]<f.sc[1] ? 0 : 1;
+  let msg = '';
+  if (f.over) msg = `Frame ${f.no} to ${esc(nm(f.winner))}`;
+  else if (f.ph==='black') msg = 'Re-spotted black';
+  else if (lead > rem) { const n = Math.ceil((lead-rem)/Math.max(4, ballOnVal(f))); msg = `${esc(nm(trail))} needs ${n} snooker${n>1?'s':''}`; }
+  else if (f.fbOffer) msg = `Foul — ${esc(nm(f.turn))} to play`;
+  const venue = [S.cfg.venue, S.cfg.table].filter(Boolean).map(esc).join(' · ');
+  const onLbl = f.ph==='red' ? 'Red' : f.ph==='colour' ? 'Colour' : BALL[ballOnVal(f)];
+  document.getElementById('tv').innerHTML = `
+    <div class="tv-head"><span>${venue || 'Snooker'} · Frame ${f.no} · Best of ${S.cfg.bestOf}</span><span class="tv-clock num" id="tvclock">${clockText()}</span></div>
+    ${[0,1].map(i => `<div class="tv-row${!f.over && f.turn===i?' on':''}"><span class="tv-mark"></span><span class="tv-name">${esc(nm(i))}</span><span class="tv-frames num">${S.framesWon[i]}</span><span class="tv-score">${f.sc[i]}</span></div>`).join('')}
+    <div class="tv-break">${f.brk>0 ? `<span class="t">Break ${f.brk}</span>${f.bb.map(b=>ballDot(b)).join('')}` : ''}</div>
+    <div class="tv-foot">
+      <div><div class="lbl">Reds</div><div class="val">${f.reds}</div></div>
+      <div><div class="lbl">Ball on</div><div class="val">${f.over?'—':onLbl}</div></div>
+      <div><div class="lbl">Remaining</div><div class="val">${f.over?0:rem}</div></div>
+      <div class="msg"><div class="lbl">&nbsp;</div><div class="val">${msg}</div></div>
+    </div>`;
+}
+setInterval(() => { const c = document.getElementById('tvclock'); if (c && S && !S.f.over) c.textContent = clockText(); }, 1000);
+
+/* ---------- events ---------- */
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  const f = S.f;
+  if (t.dataset.pot){ const v=+t.dataset.pot; if (canPot(v)) act(()=>pot(v)); return; }
+  if (t.dataset.concede){
+    const k = 'c'+t.dataset.concede;
+    if (armed===k){ armed=null; clearTimeout(armTimer); act(()=>concede(+t.dataset.concede)); }
+    else { armed=k; clearTimeout(armTimer); armTimer=setTimeout(()=>{armed=null; render();}, 3000); render(); }
+    return;
+  }
+  if (t.dataset.pen){ foulUI.pen=+t.dataset.pen; render(); return; }
+  if (t.dataset.rl){ foulUI.reds=Math.max(0, Math.min(f.reds, foulUI.reds + +t.dataset.rl)); render(); return; }
+  if (t.id==='nextframe'){ act(startFrame); return; }
+  switch (t.dataset.a){
+    case 'end': act(endVisit); break;
+    case 'foul': foulUI = foulUI ? null : {pen:Math.max(4, ballOnVal(f)), reds:0}; render(); break;
+    case 'foulok': { const {pen,reds} = foulUI; act(()=>foul(pen,reds)); break; }
+    case 'foulx': foulUI=null; render(); break;
+    case 'fb': act(freeBall); break;
+    case 'again': act(playAgain); break;
+    case 'undo': undo(); break;
+  }
+});
+document.getElementById('setupform').addEventListener('submit', e => {
+  e.preventDefault();
+  const g = id => document.getElementById(id).value.trim();
+  newMatch({p:[{n:g('p1'),h:+g('h1')||0},{n:g('p2'),h:+g('h2')||0}], bestOf:+g('bo'), venue:g('venue'), table:g('tbl'), first:+g('first')}, false);
+  save(); location.hash = '#scorer'; render();
+});
+document.getElementById('loadex').addEventListener('click', () => { seed(); save(); location.hash='#scorer'; render(); });
+
+function route(){
+  const v = ['scorer','board','setup'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'scorer';
+  ['scorer','board','setup'].forEach(x => document.getElementById('v-'+x).hidden = x!==v);
+  document.querySelectorAll('.tabs a').forEach(a => { if (a.dataset.v===v) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
+}
+window.addEventListener('hashchange', route);
+
+try { const raw = localStorage.getItem(KEY); if (raw) S = JSON.parse(raw); } catch(e) {}
+if (!S || !S.f) seed();
+route(); render();
+</script>
+</body>
+</html>
